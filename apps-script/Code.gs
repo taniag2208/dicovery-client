@@ -1,39 +1,37 @@
 /**
- * Apps Script para recibir las respuestas del formulario "Discovery Technofood"
- * y guardarlas como una fila nueva en esta hoja de cálculo.
+ * Apps Script para el formulario "Discovery Technofood".
+ * Recibe cada envío (POST con JSON) y lo guarda en la hoja:
+ *   - las PREGUNTAS quedan como columnas (fila 1)
+ *   - cada ENVÍO queda como una fila nueva
+ *   - se agrega siempre la columna "Fecha y hora"
  *
- * Instalación:
- * 1. Abre (o crea) la Google Sheet donde quieres guardar las respuestas.
- * 2. Menú Extensiones → Apps Script.
- * 3. Borra el contenido de "Código.gs" y pega todo este archivo.
- * 4. Guarda el proyecto (Ctrl/Cmd + S).
- * 5. Implementar → Nueva implementación → tipo "Aplicación web".
- *    - Ejecutar como: Yo (tu cuenta)
- *    - Quién tiene acceso: Cualquier usuario
- * 6. Autoriza los permisos que pida Google (es tu propio script).
- * 7. Copia la URL que termina en "/exec" y pégala en index.html,
- *    en la constante SHEET_WEBHOOK_URL.
+ * Escribe en la PRIMERA hoja del documento (p. ej. "Hoja 1"): no crea
+ * pestañas nuevas y agrega columnas automáticamente si llegan campos nuevos.
  *
- * Cada envío del formulario crea/actualiza la hoja "Respuestas":
- * agrega columnas nuevas automáticamente si aparecen campos nuevos,
- * y siempre añade una columna "Fecha y hora" con el momento del envío.
+ * IMPORTANTE al actualizar el código:
+ * Implementar → Gestionar implementaciones → editar (lápiz) →
+ * Versión: "Nueva versión" → Implementar.
+ * Así se conserva la MISMA URL /exec. Si creas una implementación nueva,
+ * la URL cambia y hay que pegarla de nuevo en index.html (SHEET_WEBHOOK_URL).
  */
-
-const SHEET_NAME = 'Respuestas';
 
 function doPost(e) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheets()[0]; // primera hoja (Hoja 1)
 
-    const data = JSON.parse(e.postData.contents);
-    data['Fecha y hora'] = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+    var data = JSON.parse(e.postData.contents);
+    data['Fecha y hora'] = Utilities.formatDate(
+      new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
 
-    const lastCol = sheet.getLastColumn();
-    let headers = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+    var lastCol = sheet.getLastColumn();
+    var headers = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
 
-    // Si llegan campos que todavía no tienen columna, se agregan al final
-    const newKeys = Object.keys(data).filter(function (k) {
+    // Si la fila 1 está vacía (solo celdas en blanco), la tratamos como sin encabezados
+    if (headers.join('') === '') headers = [];
+
+    // Agrega columnas nuevas para claves que aún no tienen encabezado
+    var newKeys = Object.keys(data).filter(function (k) {
       return headers.indexOf(k) === -1;
     });
     if (newKeys.length > 0) {
@@ -41,24 +39,23 @@ function doPost(e) {
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     }
 
-    const row = headers.map(function (h) {
+    var row = headers.map(function (h) {
       return data[h] !== undefined ? data[h] : '';
     });
     sheet.appendRow(row);
 
     return ContentService
-      .createTextOutput(JSON.stringify({ status: 'ok' }))
+      .createTextOutput(JSON.stringify({ status: 'ok', columnas: headers.length }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService
-      .createTextOutput(JSON.stringify({ status: 'error', message: err.message }))
+      .createTextOutput(JSON.stringify({ status: 'error', message: String(err) }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-// Solo para verificar que la implementación quedó activa (abre la URL /exec en el navegador)
+// Verificación en el navegador: abre la URL /exec y debe mostrar este texto.
 function doGet(e) {
   return ContentService
-    .createTextOutput('El webhook de Discovery Technofood está activo.')
-    .setMimeType(ContentService.MimeType.TEXT);
+    .createTextOutput('El webhook de Discovery Technofood está activo.');
 }
