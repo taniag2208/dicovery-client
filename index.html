@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discovery · Technofood</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#171a1c;
+    --ink-soft:#565f66;
+    --paper:#f7f8f6;
+    --card:#ffffff;
+    --line:#e4e6e1;
+    --mint:#80E593;
+    --mint-deep:#3f9e57;
+    --cyan:#52C7CF;
+    --cyan-deep:#2a8b93;
+    --amber:#e0a840;
+    --danger:#d8654a;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(180deg, #eef4ee 0%, var(--paper) 340px);
+    color:var(--ink);
+    font-family:'Be Vietnam Pro', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* subtle blueprint grid texture in the hero */
+  .hero{
+    position:relative;
+    padding:56px 6vw 40px;
+    overflow:hidden;
+    border-bottom:1px solid var(--line);
+  }
+  .hero::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(82,199,207,0.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(82,199,207,0.10) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: linear-gradient(180deg, black, transparent 85%);
+    pointer-events:none;
+  }
+  .hero-inner{position:relative; max-width:920px;}
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--cyan-deep); font-weight:500;
+    background:rgba(82,199,207,0.12);
+    border:1px solid rgba(82,199,207,0.35);
+    padding:5px 12px; border-radius:100px;
+    margin-bottom:18px;
+  }
+  .eyebrow span.dot{width:6px;height:6px;border-radius:50%;background:var(--mint-deep);}
+  h1{
+    font-size:clamp(30px,4vw,44px);
+    font-weight:800; letter-spacing:-0.02em; line-height:1.05;
+    margin:0 0 14px;
+  }
+  .hero p.sub{
+    font-size:16.5px; color:var(--ink-soft); max-width:640px; line-height:1.55; margin:0;
+  }
+  .hero-meta{
+    display:flex; flex-wrap:wrap; gap:28px; margin-top:30px;
+  }
+  .hero-meta div{font-size:13px; color:var(--ink-soft);}
+  .hero-meta strong{display:block; font-size:14px; color:var(--ink); font-weight:600; margin-top:2px;}
+
+  .layout{
+    max-width:1180px; margin:0 auto; padding:40px 6vw 120px;
+    display:grid; grid-template-columns:240px 1fr; gap:44px;
+  }
+  @media (max-width:880px){ .layout{grid-template-columns:1fr;} .railwrap{display:none;} }
+
+  /* left rail */
+  .railwrap{position:sticky; top:24px; align-self:start; height:calc(100vh - 48px); overflow:auto;}
+  .rail{border-left:2px solid var(--line); padding-left:22px; position:relative;}
+  .rail-item{
+    display:block; position:relative; padding:9px 0 9px 4px;
+    font-size:13.5px; color:var(--ink-soft); text-decoration:none; font-weight:500;
+    cursor:pointer; transition:color .15s;
+  }
+  .rail-item:hover{color:var(--ink);}
+  .rail-item.done{color:var(--mint-deep);}
+  .rail-item .num{
+    position:absolute; left:-27px; top:8px;
+    width:14px;height:14px;border-radius:50%;
+    background:var(--paper); border:2px solid var(--line);
+    transition:all .15s;
+  }
+  .rail-item.done .num{background:var(--mint); border-color:var(--mint-deep);}
+  .rail-progress{
+    margin-top:22px; padding-top:16px; border-top:1px solid var(--line);
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-soft);
+  }
+  .rail-progress .bar{height:5px; background:var(--line); border-radius:10px; margin-top:8px; overflow:hidden;}
+  .rail-progress .fill{height:100%; width:0%; background:linear-gradient(90deg,var(--cyan),var(--mint)); transition:width .3s;}
+
+  /* main content */
+  main{min-width:0;}
+  .phase{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:44px clamp(24px,3.5vw,56px); margin-bottom:36px;
+    scroll-margin-top:24px;
+  }
+  .phase-head{display:flex; gap:18px; align-items:flex-start; margin-bottom:8px; padding-bottom:24px; border-bottom:1px solid var(--line);}
+  .phase-badge{
+    font-family:'JetBrains Mono',monospace; font-weight:600; font-size:13px;
+    color:var(--cyan-deep); background:rgba(82,199,207,0.13);
+    border:1px solid rgba(82,199,207,0.3);
+    width:36px; height:36px; min-width:36px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .phase-title{font-size:21px; font-weight:700; letter-spacing:-0.01em; margin:3px 0 6px;}
+  .phase-goal{font-size:14.5px; color:var(--ink-soft); line-height:1.6; max-width:560px;}
+  .phase-body{margin-top:8px; display:flex; flex-direction:column; gap:38px;}
+
+  .q{display:flex; flex-direction:column; gap:10px; padding-bottom:26px; border-bottom:1px solid var(--line);}
+  .q:last-child{border-bottom:none; padding-bottom:0;}
+  .q label.qtext{font-size:15px; font-weight:600; color:var(--ink); line-height:1.4;}
+  .q .hint{font-size:12.5px; color:var(--ink-soft); margin-top:-4px;}
+  .comment-field{margin-top:6px;}
+  .comment-field input{
+    border:none; border-bottom:1.5px dashed var(--line); border-radius:0;
+    background:transparent; padding:6px 2px 8px; font-size:13px; color:var(--ink-soft);
+  }
+  .comment-field input:focus{
+    outline:none; border-bottom-color:var(--cyan-deep); box-shadow:none;
+  }
+  .comment-field .clabel{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.04em;
+    text-transform:uppercase; color:#9aa3a8; margin-bottom:4px; display:block;
+  }
+  input[type=text], input[type=date], textarea, select{
+    font-family:'Be Vietnam Pro',sans-serif;
+    border:1.5px solid var(--line); border-radius:10px;
+    padding:11px 13px; font-size:14px; color:var(--ink);
+    background:#fcfdfb; width:100%; transition:border-color .15s, box-shadow .15s;
+  }
+  input[type=text]:focus, textarea:focus, select:focus{
+    outline:none; border-color:var(--cyan-deep); box-shadow:0 0 0 3px rgba(82,199,207,0.16);
+  }
+  textarea{min-height:82px; resize:vertical; line-height:1.55;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:28px;}
+  @media (max-width:600px){.row2{grid-template-columns:1fr;}}
+
+  /* chip toggles for checkbox / radio groups */
+  .chips{display:flex; flex-wrap:wrap; gap:9px;}
+  .chip{
+    font-size:13px; font-weight:500; color:var(--ink-soft);
+    background:#fcfdfb; border:1.5px solid var(--line); border-radius:100px;
+    padding:8px 14px; cursor:pointer; user-select:none; transition:all .15s;
+  }
+  .chip:hover{border-color:var(--cyan-deep);}
+  .chip.active{
+    background:linear-gradient(135deg, rgba(128,229,147,0.22), rgba(82,199,207,0.22));
+    border-color:var(--mint-deep); color:var(--ink); font-weight:600;
+  }
+  .chip input{position:absolute; opacity:0; pointer-events:none;}
+  .other-input{margin-top:4px;}
+
+  .divider-mini{border:none; border-top:1px dashed var(--line); margin:2px 0;}
+  .subblock{background:#fbfbf9; border:1px solid var(--line); border-radius:12px; padding:28px 30px; display:flex; flex-direction:column; gap:26px;}
+  .subblock-title{font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--cyan-deep); margin-bottom:-8px;}
+  .subblock .q{border-bottom:1px dashed var(--line); padding-bottom:22px;}
+  .subblock .q:last-child{border-bottom:none; padding-bottom:0;}
+  .subblock .row2{gap:26px;}
+
+  footer.submitbar{
+    position:sticky; bottom:0; left:0; right:0;
+    background:linear-gradient(0deg, var(--paper) 70%, transparent);
+    padding:22px 0 4px; margin-top:8px;
+  }
+  .submitcard{
+    background:var(--ink); color:#fff; border-radius:16px;
+    padding:20px 26px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    box-shadow:0 12px 30px rgba(0,0,0,0.18);
+  }
+  .submitcard div.txt{font-size:13.5px; color:#c9cfd3; max-width:420px;}
+  .submitcard div.txt strong{color:#fff; display:block; font-size:15px; margin-bottom:2px;}
+  button.send{
+    font-family:'Be Vietnam Pro',sans-serif; font-weight:700; font-size:14.5px;
+    background:linear-gradient(135deg,var(--mint),var(--cyan)); color:#0b1210;
+    border:none; padding:14px 26px; border-radius:11px; cursor:pointer;
+    transition:transform .12s, box-shadow .12s; white-space:nowrap;
+  }
+  button.send:hover{transform:translateY(-1px); box-shadow:0 6px 16px rgba(128,229,147,0.35);}
+  button.send:disabled{opacity:.6; cursor:default; transform:none;}
+  #statusMsg{font-family:'JetBrains Mono',monospace; font-size:12.5px; margin-top:10px; text-align:right;}
+
+  ::selection{background:rgba(128,229,147,0.4);}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow"><span class="dot"></span>TM-PR-423 · Discovery de proyecto</div>
+    <h1>Discovery Technofood</h1>
+    <p class="sub">Guía de sesión para resolver, en detalle, los objetivos, la arquitectura, el contenido y la personalización de la plantilla Shopify antes de pasar a diseño y construcción.</p>
+  </div>
+</div>
+
+<div class="layout">
+
+  <div class="railwrap">
+    <nav class="rail" id="rail">
+      <a class="rail-item" data-target="f1"><span class="num"></span>Objetivos del proyecto</a>
+      <a class="rail-item" data-target="f2"><span class="num"></span>Usuarios y recorridos</a>
+      <a class="rail-item" data-target="f3"><span class="num"></span>Arquitectura y navegación</a>
+      <a class="rail-item" data-target="f4"><span class="num"></span>Definición de páginas</a>
+      <a class="rail-item" data-target="f5"><span class="num"></span>Formularios</a>
+      <a class="rail-item" data-target="f6"><span class="num"></span>Plantilla Shopify</a>
+      <a class="rail-item" data-target="f7"><span class="num"></span>Contenido y activos</a>
+    </nav>
+    <div class="rail-progress">
+      <span id="progressLabel">0% respondido</span>
+      <div class="bar"><div class="fill" id="progressFill"></div></div>
+    </div>
+  </div>
+
+  <main>
+    <form id="discoveryForm">
+
+      <!-- FASE 1 -->
+      <section class="phase" id="f1">
+        <div class="phase-head">
+          <div class="phase-badge">01</div>
+          <div>
+            <div class="phase-title">Objetivos del proyecto</div>
+            <div class="phase-goal">Entender las expectativas del negocio y los resultados esperados con el nuevo sitio.</div>
+          </div>
+        </div>
+        <div class="phase-body">
+          <div class="q"><label class="qtext">¿Cuál es el principal objetivo del nuevo sitio?</label>
+            <textarea name="f1_objetivo_principal" placeholder="Ej: Reemplazar el sitio en WordPress por una plataforma que muestre bien el catálogo B2B de 70+ categorías y genere solicitudes de cotización calificadas."></textarea></div>
+          <div class="q"><label class="qtext">¿Qué esperan lograr con este proyecto?</label>
+            <textarea name="f1_que_esperan_lograr" placeholder="Ej: Que un comprador industrial encuentre el equipo correcto en menos de 3 clics y pida cotización sin llamar primero."></textarea></div>
+          <div class="q"><label class="qtext">¿Qué problemas presenta actualmente el sitio web?</label>
+            <textarea name="f1_problemas_actuales" placeholder="Ej: El catálogo actual no se puede filtrar por industria, las fichas técnicas están desactualizadas y no hay forma de dar seguimiento a solicitudes de servicio técnico."></textarea></div>
+          <div class="q"><label class="qtext">¿Qué oportunidades identifican para mejorar la experiencia del usuario?</label>
+            <textarea name="f1_oportunidades_ux" placeholder="Ej: Separar la navegación por industria (panadería vs. cárnicos) para que cada cliente vea solo lo relevante para su negocio."></textarea></div>
+          <div class="q"><label class="qtext">¿Qué aspectos consideran indispensables en el nuevo sitio?</label>
+            <textarea name="f1_aspectos_indispensables" placeholder="Ej: Botón de WhatsApp visible en toda ficha de producto, y trazabilidad de solicitudes de servicio técnico vía SAMM."></textarea></div>
+          <div class="row2">
+            <div class="q"><label class="qtext">¿Cómo sabrán que el proyecto fue exitoso?</label>
+              <textarea name="f1_indicador_exito" placeholder="Ej: Aumento en cotizaciones solicitadas por el sitio vs. las que llegan hoy solo por WhatsApp/llamada."></textarea></div>
+            <div class="q"><label class="qtext">¿Qué acciones esperan que realicen los usuarios?</label>
+              <textarea name="f1_acciones_usuarios" placeholder="Ej: Filtrar por industria, descargar ficha técnica, solicitar cotización."></textarea></div>
+          </div>
+          <div class="q"><label class="qtext">¿Cuál es la prioridad principal del sitio?</label>
+            <div class="hint">Ej: para Technofood suele pesar más "generar solicitudes de cotización" que la imagen de marca.</div>
+            <div class="chips" data-group="f1_prioridad" data-type="radio">
+              <label class="chip"><input type="radio" name="f1_prioridad" value="Generar solicitudes de cotización">Generar solicitudes de cotización</label>
+              <label class="chip"><input type="radio" name="f1_prioridad" value="Incrementar consultas comerciales">Incrementar consultas comerciales</label>
+              <label class="chip"><input type="radio" name="f1_prioridad" value="Mostrar el portafolio de productos">Mostrar el portafolio de productos</label>
+              <label class="chip"><input type="radio" name="f1_prioridad" value="Fortalecer la imagen de marca">Fortalecer la imagen de marca</label>
+              <label class="chip"><input type="radio" name="f1_prioridad" value="Mejorar posicionamiento SEO">Mejorar posicionamiento SEO</label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 2 -->
+      <section class="phase" id="f2">
+        <div class="phase-head">
+          <div class="phase-badge">02</div>
+          <div>
+            <div class="phase-title">Usuarios y recorridos</div>
+            <div class="phase-goal">Identificar quién utilizará el sitio y cuáles serán los principales recorridos de navegación.</div>
+          </div>
+        </div>
+        <div class="phase-body">
+          <div class="q"><label class="qtext">¿Quiénes visitan el sitio? / ¿Qué tipo de clientes tienen?</label>
+            <div class="hint">Ej: en Technofood suelen predominar industria alimentaria y distribuidores de equipos.</div>
+            <div class="chips" data-group="f2_tipos_clientes" data-type="checkbox">
+              <label class="chip"><input type="checkbox" name="f2_tipos_clientes" value="Restaurantes">Restaurantes</label>
+              <label class="chip"><input type="checkbox" name="f2_tipos_clientes" value="Hoteles">Hoteles</label>
+              <label class="chip"><input type="checkbox" name="f2_tipos_clientes" value="Hospitales">Hospitales</label>
+              <label class="chip"><input type="checkbox" name="f2_tipos_clientes" value="Industria alimentaria">Industria alimentaria</label>
+              <label class="chip"><input type="checkbox" name="f2_tipos_clientes" value="Distribuidores">Distribuidores</label>
+              <label class="chip"><input type="checkbox" name="f2_tipos_clientes" value="Empresas">Empresas</label>
+            </div>
+          </div>
+          <div class="q"><label class="qtext">¿Existen diferentes perfiles de usuario? Descríbelos.</label>
+            <textarea name="f2_perfiles_usuario" placeholder="Ej: (1) Jefe de mantenimiento buscando repuesto urgente, (2) Gerente de planta comparando marcas antes de comprar equipo nuevo."></textarea></div>
+          <div class="q"><label class="qtext">¿Qué buscan hacer dentro del sitio?</label>
+            <div class="chips" data-group="f2_acciones_buscan" data-type="checkbox">
+              <label class="chip"><input type="checkbox" name="f2_acciones_buscan" value="Buscar productos">Buscar productos</label>
+              <label class="chip"><input type="checkbox" name="f2_acciones_buscan" value="Solicitar cotizaciones">Solicitar cotizaciones</label>
+              <label class="chip"><input type="checkbox" name="f2_acciones_buscan" value="Contactar un asesor">Contactar un asesor</label>
+              <label class="chip"><input type="checkbox" name="f2_acciones_buscan" value="Consultar servicios">Consultar servicios</label>
+              <label class="chip"><input type="checkbox" name="f2_acciones_buscan" value="Descargar fichas técnicas">Descargar fichas técnicas</label>
+              <label class="chip"><input type="checkbox" name="f2_acciones_buscan" value="Conocer la empresa">Conocer la empresa</label>
+            </div>
+          </div>
+          <div class="q"><label class="qtext">¿Cuál debería ser el recorrido ideal del usuario, desde que ingresa hasta que realiza una acción?</label>
+            <textarea name="f2_flujo_ideal" placeholder="Ej: Entra por Google buscando 'horno rotativo panadería' → llega a categoría → filtra por marca → descarga ficha técnica → solicita cotización por WhatsApp."></textarea></div>
+        </div>
+      </section>
+
+      <!-- FASE 3 -->
+      <section class="phase" id="f3">
+        <div class="phase-head">
+          <div class="phase-badge">03</div>
+          <div>
+            <div class="phase-title">Arquitectura y navegación</div>
+            <div class="phase-goal">Definir la estructura general del sitio web y la organización del contenido.</div>
+          </div>
+        </div>
+        <div class="phase-body">
+          <div class="q"><label class="qtext">¿Qué páginas conformarán el sitio?</label>
+            <div class="hint">Ej: para un sitio no transaccional, "Marcas" y "Preguntas frecuentes" suelen ser páginas que faltan.</div>
+            <div class="chips" data-group="f3_paginas" data-type="checkbox">
+              <label class="chip"><input type="checkbox" name="f3_paginas" value="Inicio">Inicio</label>
+              <label class="chip"><input type="checkbox" name="f3_paginas" value="Productos">Productos</label>
+              <label class="chip"><input type="checkbox" name="f3_paginas" value="Servicios">Servicios</label>
+              <label class="chip"><input type="checkbox" name="f3_paginas" value="Nosotros">Nosotros</label>
+              <label class="chip"><input type="checkbox" name="f3_paginas" value="Marcas">Marcas</label>
+              <label class="chip"><input type="checkbox" name="f3_paginas" value="Casos de éxito">Casos de éxito</label>
+              <label class="chip"><input type="checkbox" name="f3_paginas" value="Blog">Blog</label>
+              <label class="chip"><input type="checkbox" name="f3_paginas" value="Contacto">Contacto</label>
+              <label class="chip"><input type="checkbox" name="f3_paginas" value="Preguntas frecuentes">Preguntas frecuentes</label>
+            </div>
+          </div>
+          <div class="q"><label class="qtext">¿Cómo desean organizar los productos?</label>
+            <div class="hint">Ej: Technofood ya definió "3 puertas" — industria, categoría y marca — como ejes de navegación.</div>
+            <div class="chips" data-group="f3_organizacion_catalogo" data-type="radio">
+              <label class="chip"><input type="radio" name="f3_organizacion_catalogo" value="Por categoría">Por categoría</label>
+              <label class="chip"><input type="radio" name="f3_organizacion_catalogo" value="Por marca">Por marca</label>
+              <label class="chip"><input type="radio" name="f3_organizacion_catalogo" value="Por industria">Por industria</label>
+              <label class="chip"><input type="radio" name="f3_organizacion_catalogo" value="Por aplicación">Por aplicación</label>
+              <label class="chip"><input type="radio" name="f3_organizacion_catalogo" value="Por línea de negocio">Por línea de negocio</label>
+            </div>
+          </div>
+          <div class="q"><label class="qtext">¿Qué información debe aparecer en el pie de página (footer)?</label>
+            <div class="hint">Ej: certificaciones de los equipos y ubicación de planta suelen dar confianza en compradores B2B.</div>
+            <div class="chips" data-group="f3_footer" data-type="checkbox">
+              <label class="chip"><input type="checkbox" name="f3_footer" value="Información de contacto">Información de contacto</label>
+              <label class="chip"><input type="checkbox" name="f3_footer" value="Redes sociales">Redes sociales</label>
+              <label class="chip"><input type="checkbox" name="f3_footer" value="Políticas">Políticas</label>
+              <label class="chip"><input type="checkbox" name="f3_footer" value="Certificaciones">Certificaciones</label>
+              <label class="chip"><input type="checkbox" name="f3_footer" value="Ubicación">Ubicación</label>
+              <label class="chip"><input type="checkbox" name="f3_footer" value="Enlaces rápidos">Enlaces rápidos</label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 4 -->
+      <section class="phase" id="f4">
+        <div class="phase-head">
+          <div class="phase-badge">04</div>
+          <div>
+            <div class="phase-title">Definición de las páginas</div>
+            <div class="phase-goal">Definir la estructura y el contenido de cada página del sitio.</div>
+          </div>
+        </div>
+        <div class="phase-body">
+
+          <div class="subblock">
+            <div class="subblock-title">Inicio</div>
+            <div class="row2">
+              <div class="q"><label class="qtext">¿Cuál será el mensaje principal?</label><textarea name="f4_inicio_mensaje" placeholder="Ej: '35 años equipando la industria alimentaria de Colombia — bakery y cárnicos'"></textarea></div>
+              <div class="q"><label class="qtext">¿Qué queremos que vea primero el usuario?</label><textarea name="f4_inicio_primero" placeholder="Ej: Las dos industrias que atienden (panadería / cárnicos) para que el usuario se ubique de inmediato"></textarea></div>
+            </div>
+            <div class="row2">
+              <div class="q"><label class="qtext">¿Cuál será la llamada a la acción principal?</label><input type="text" name="f4_inicio_cta" placeholder="Ej: Solicitar cotización"></div>
+              <div class="q"><label class="qtext">¿Qué productos o servicios deben destacarse?</label><input type="text" name="f4_inicio_destacados" placeholder="Ej: Hornos rotativos, cámaras de fermentación, línea de despiece"></div>
+            </div>
+            <div class="q"><label class="qtext">Componentes de la página de inicio</label>
+              <div class="chips" data-group="f4_inicio_componentes" data-type="checkbox">
+                <label class="chip"><input type="checkbox" name="f4_inicio_componentes" value="Banner principal">Banner principal</label>
+                <label class="chip"><input type="checkbox" name="f4_inicio_componentes" value="Video">Video</label>
+                <label class="chip"><input type="checkbox" name="f4_inicio_componentes" value="Productos destacados">Productos destacados</label>
+                <label class="chip"><input type="checkbox" name="f4_inicio_componentes" value="Categorías">Categorías</label>
+                <label class="chip"><input type="checkbox" name="f4_inicio_componentes" value="Servicios destacados">Servicios destacados</label>
+                <label class="chip"><input type="checkbox" name="f4_inicio_componentes" value="Marcas">Marcas</label>
+                <label class="chip"><input type="checkbox" name="f4_inicio_componentes" value="Clientes">Clientes</label>
+                <label class="chip"><input type="checkbox" name="f4_inicio_componentes" value="Beneficios">Beneficios</label>
+                <label class="chip"><input type="checkbox" name="f4_inicio_componentes" value="Testimonios">Testimonios</label>
+                <label class="chip"><input type="checkbox" name="f4_inicio_componentes" value="Formulario de contacto">Formulario de contacto</label>
+                <label class="chip"><input type="checkbox" name="f4_inicio_componentes" value="Blog">Blog</label>
+                <label class="chip"><input type="checkbox" name="f4_inicio_componentes" value="CTA final">CTA final</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="subblock">
+            <div class="subblock-title">Página de categoría</div>
+            <div class="q"><label class="qtext">Filtros para presentar los productos</label>
+              <div class="hint">Ej: "Industria" y "Categoría técnica" suelen ser los filtros que más usan los compradores B2B.</div>
+              <div class="chips" data-group="f4_categoria_filtros" data-type="checkbox">
+                <label class="chip"><input type="checkbox" name="f4_categoria_filtros" value="Categoría">Categoría</label>
+                <label class="chip"><input type="checkbox" name="f4_categoria_filtros" value="Marca">Marca</label>
+                <label class="chip"><input type="checkbox" name="f4_categoria_filtros" value="Industria">Industria</label>
+                <label class="chip"><input type="checkbox" name="f4_categoria_filtros" value="Aplicación">Aplicación</label>
+                <label class="chip"><input type="checkbox" name="f4_categoria_filtros" value="Disponibilidad">Disponibilidad</label>
+                <label class="chip"><input type="checkbox" name="f4_categoria_filtros" value="Características técnicas">Características técnicas</label>
+              </div>
+            </div>
+            <div class="q"><label class="qtext">Ordenamiento</label>
+              <div class="chips" data-group="f4_categoria_orden" data-type="checkbox">
+                <label class="chip"><input type="checkbox" name="f4_categoria_orden" value="Más recientes">Más recientes</label>
+                <label class="chip"><input type="checkbox" name="f4_categoria_orden" value="Destacados">Destacados</label>
+                <label class="chip"><input type="checkbox" name="f4_categoria_orden" value="Alfabético">Alfabético</label>
+                <label class="chip"><input type="checkbox" name="f4_categoria_orden" value="Recomendados">Recomendados</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="subblock">
+            <div class="subblock-title">Página de producto</div>
+            <div class="q"><label class="qtext">¿Qué información tendrá cada producto?</label>
+              <div class="hint">Ej: en equipos industriales, especificaciones técnicas y ficha PDF descargable suelen ser lo más buscado.</div>
+              <div class="chips" data-group="f4_producto_info" data-type="checkbox">
+                <label class="chip"><input type="checkbox" name="f4_producto_info" value="Galería de imágenes">Galería de imágenes</label>
+                <label class="chip"><input type="checkbox" name="f4_producto_info" value="Video">Video</label>
+                <label class="chip"><input type="checkbox" name="f4_producto_info" value="Descripción">Descripción</label>
+                <label class="chip"><input type="checkbox" name="f4_producto_info" value="Especificaciones técnicas">Especificaciones técnicas</label>
+                <label class="chip"><input type="checkbox" name="f4_producto_info" value="Beneficios">Beneficios</label>
+                <label class="chip"><input type="checkbox" name="f4_producto_info" value="Características">Características</label>
+                <label class="chip"><input type="checkbox" name="f4_producto_info" value="Accesorios relacionados">Accesorios relacionados</label>
+                <label class="chip"><input type="checkbox" name="f4_producto_info" value="Productos relacionados">Productos relacionados</label>
+                <label class="chip"><input type="checkbox" name="f4_producto_info" value="Descarga ficha técnica (PDF)">Descarga ficha técnica (PDF)</label>
+                <label class="chip"><input type="checkbox" name="f4_producto_info" value="Manuales">Manuales</label>
+                <label class="chip"><input type="checkbox" name="f4_producto_info" value="Garantía">Garantía</label>
+                <label class="chip"><input type="checkbox" name="f4_producto_info" value="Preguntas frecuentes">Preguntas frecuentes</label>
+              </div>
+            </div>
+            <div class="row2">
+              <div class="q"><label class="qtext">¿Los productos podrán comprarse directamente?</label>
+                <div class="chips" data-group="f4_producto_compra" data-type="radio">
+                  <label class="chip"><input type="radio" name="f4_producto_compra" value="Sí">Sí</label>
+                  <label class="chip"><input type="radio" name="f4_producto_compra" value="No">No</label>
+                </div>
+              </div>
+              <div class="q"><label class="qtext">¿El objetivo será solicitar una cotización?</label>
+                <div class="chips" data-group="f4_producto_cotizacion_obj" data-type="radio">
+                  <label class="chip"><input type="radio" name="f4_producto_cotizacion_obj" value="Sí">Sí</label>
+                  <label class="chip"><input type="radio" name="f4_producto_cotizacion_obj" value="No">No</label>
+                </div>
+              </div>
+            </div>
+            <div class="q"><label class="qtext">¿Qué llamada a la acción tendrá cada producto?</label><input type="text" name="f4_producto_cta" placeholder="Ej: Solicitar cotización de este equipo"></div>
+          </div>
+
+          <div class="subblock">
+            <div class="subblock-title">Servicios</div>
+            <div class="hint" style="margin-bottom:8px;">Para cada servicio: objetivo, descripción, beneficios, proceso y llamado a la acción.</div>
+            <div class="q"><textarea name="f4_servicios_detalle" style="min-height:120px;" placeholder="Ej: Servicio 1 — Mantenimiento preventivo: objetivo evitar paros de línea; incluye visita técnica programada; CTA 'Agendar mantenimiento'.&#10;Servicio 2 — Repuestos originales: ..."></textarea></div>
+          </div>
+
+          <div class="subblock">
+            <div class="subblock-title">Nosotros</div>
+            <div class="hint" style="margin-bottom:8px;">Historia, propósito, valores, equipo, certificaciones, aliados, cobertura.</div>
+            <div class="q"><textarea name="f4_nosotros_detalle" style="min-height:100px;" placeholder="Ej: 35 años en el mercado colombiano, distribuidor autorizado de X e Y marcas, cobertura nacional con técnicos propios en 4 ciudades."></textarea></div>
+          </div>
+
+          <div class="subblock">
+            <div class="subblock-title">Blog</div>
+            <div class="row2">
+              <div class="q"><label class="qtext">¿Existirá blog?</label>
+                <div class="chips" data-group="f4_blog_existe" data-type="radio">
+                  <label class="chip"><input type="radio" name="f4_blog_existe" value="Sí">Sí</label>
+                  <label class="chip"><input type="radio" name="f4_blog_existe" value="No">No</label>
+                </div>
+              </div>
+              <div class="q"><label class="qtext">¿Quién administrará el contenido?</label><input type="text" name="f4_blog_administrador" placeholder="Ej: Equipo de marketing de Technofood"></div>
+            </div>
+            <div class="q"><label class="qtext">¿Qué tipo de contenido publicarán?</label><input type="text" name="f4_blog_tipo_contenido" placeholder="Ej: Guías de mantenimiento de equipos, casos de éxito con clientes"></div>
+          </div>
+
+          <div class="subblock">
+            <div class="subblock-title">Contacto</div>
+            <div class="q"><label class="qtext">Información a incluir</label>
+              <div class="hint">Ej: en B2B industrial, WhatsApp directo suele convertir más que el formulario.</div>
+              <div class="chips" data-group="f4_contacto_info" data-type="checkbox">
+                <label class="chip"><input type="checkbox" name="f4_contacto_info" value="Información de contacto">Información de contacto</label>
+                <label class="chip"><input type="checkbox" name="f4_contacto_info" value="Mapa">Mapa</label>
+                <label class="chip"><input type="checkbox" name="f4_contacto_info" value="WhatsApp">WhatsApp</label>
+                <label class="chip"><input type="checkbox" name="f4_contacto_info" value="Correos">Correos</label>
+                <label class="chip"><input type="checkbox" name="f4_contacto_info" value="Horarios">Horarios</label>
+                <label class="chip"><input type="checkbox" name="f4_contacto_info" value="Formulario">Formulario</label>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- FASE 5 -->
+      <section class="phase" id="f5">
+        <div class="phase-head">
+          <div class="phase-badge">05</div>
+          <div>
+            <div class="phase-title">Formularios</div>
+            <div class="phase-goal">Definir todos los formularios del sitio y la información que recopilarán.</div>
+          </div>
+        </div>
+        <div class="phase-body">
+
+          <div class="subblock">
+            <div class="subblock-title">Formulario de cotización</div>
+            <div class="q"><label class="qtext">Campos</label>
+              <div class="chips" data-group="f5_cotizacion_campos" data-type="checkbox">
+                <label class="chip"><input type="checkbox" name="f5_cotizacion_campos" value="Nombre">Nombre</label>
+                <label class="chip"><input type="checkbox" name="f5_cotizacion_campos" value="Empresa">Empresa</label>
+                <label class="chip"><input type="checkbox" name="f5_cotizacion_campos" value="Cargo">Cargo</label>
+                <label class="chip"><input type="checkbox" name="f5_cotizacion_campos" value="Correo electrónico">Correo electrónico</label>
+                <label class="chip"><input type="checkbox" name="f5_cotizacion_campos" value="Teléfono">Teléfono</label>
+                <label class="chip"><input type="checkbox" name="f5_cotizacion_campos" value="Ciudad">Ciudad</label>
+                <label class="chip"><input type="checkbox" name="f5_cotizacion_campos" value="Producto de interés">Producto de interés</label>
+                <label class="chip"><input type="checkbox" name="f5_cotizacion_campos" value="Cantidad">Cantidad</label>
+                <label class="chip"><input type="checkbox" name="f5_cotizacion_campos" value="Comentarios">Comentarios</label>
+                <label class="chip"><input type="checkbox" name="f5_cotizacion_campos" value="Adjuntar archivo">Adjuntar archivo</label>
+              </div>
+            </div>
+            <div class="row2">
+              <div class="q"><label class="qtext">Correo destinatario</label><input type="text" name="f5_cotizacion_destinatario" placeholder="Ej: cotizaciones@technofood.com"></div>
+              <div class="q"><label class="qtext">Mensaje de confirmación</label><input type="text" name="f5_cotizacion_confirmacion" placeholder="Ej: 'Recibimos tu solicitud, un asesor te contacta en menos de 24h'"></div>
+            </div>
+          </div>
+
+          <div class="subblock">
+            <div class="subblock-title">Formulario de contacto</div>
+            <div class="q"><label class="qtext">Campos</label>
+              <div class="chips" data-group="f5_contacto_campos" data-type="checkbox">
+                <label class="chip"><input type="checkbox" name="f5_contacto_campos" value="Nombre">Nombre</label>
+                <label class="chip"><input type="checkbox" name="f5_contacto_campos" value="Empresa">Empresa</label>
+                <label class="chip"><input type="checkbox" name="f5_contacto_campos" value="Correo">Correo</label>
+                <label class="chip"><input type="checkbox" name="f5_contacto_campos" value="Teléfono">Teléfono</label>
+                <label class="chip"><input type="checkbox" name="f5_contacto_campos" value="Asunto">Asunto</label>
+                <label class="chip"><input type="checkbox" name="f5_contacto_campos" value="Mensaje">Mensaje</label>
+              </div>
+            </div>
+            <div class="row2">
+              <div class="q"><label class="qtext">Correo destinatario</label><input type="text" name="f5_contacto_destinatario" placeholder="Ej: contacto@technofood.com"></div>
+              <div class="q"><label class="qtext">Mensaje de confirmación</label><input type="text" name="f5_contacto_confirmacion" placeholder="Ej: 'Gracias por escribirnos, te respondemos pronto'"></div>
+            </div>
+          </div>
+
+          <div class="subblock">
+            <div class="subblock-title">Formulario de soporte técnico (si aplica)</div>
+            <div class="q"><label class="qtext">Campos</label>
+              <div class="hint">Ej: este es el formulario que alimenta a SAMM — número de serie y descripción del caso son claves para crear el ticket.</div>
+              <div class="chips" data-group="f5_soporte_campos" data-type="checkbox">
+                <label class="chip"><input type="checkbox" name="f5_soporte_campos" value="Nombre">Nombre</label>
+                <label class="chip"><input type="checkbox" name="f5_soporte_campos" value="Empresa">Empresa</label>
+                <label class="chip"><input type="checkbox" name="f5_soporte_campos" value="Equipo">Equipo</label>
+                <label class="chip"><input type="checkbox" name="f5_soporte_campos" value="Número de serie">Número de serie</label>
+                <label class="chip"><input type="checkbox" name="f5_soporte_campos" value="Ciudad">Ciudad</label>
+                <label class="chip"><input type="checkbox" name="f5_soporte_campos" value="Descripción del caso">Descripción del caso</label>
+                <label class="chip"><input type="checkbox" name="f5_soporte_campos" value="Adjuntar fotografías">Adjuntar fotografías</label>
+              </div>
+            </div>
+            <div class="row2">
+              <div class="q"><label class="qtext">Correo destinatario</label><input type="text" name="f5_soporte_destinatario" placeholder="Ej: servicio.tecnico@technofood.com"></div>
+              <div class="q"><label class="qtext">Mensaje de confirmación</label><input type="text" name="f5_soporte_confirmacion" placeholder="Ej: 'Ticket #{id} creado, un técnico te asignaremos fecha en 48h'"></div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- FASE 6 -->
+      <section class="phase" id="f6">
+        <div class="phase-head">
+          <div class="phase-badge">06</div>
+          <div>
+            <div class="phase-title">Personalización de la plantilla Shopify</div>
+            <div class="phase-goal">Identificar qué elementos de la plantilla estándar se utilizarán y cuáles requerirán personalización para ajustarse a la identidad y necesidades de Technofood.</div>
+          </div>
+        </div>
+        <div class="phase-body">
+
+          <div class="subblock">
+            <div class="subblock-title">Identidad visual</div>
+            <div class="row2">
+              <div class="q"><label class="qtext">Colores corporativos</label><input type="text" name="f6_colores" placeholder="Ej: Azul institucional #1B4F72, gris acero #6B7280"></div>
+              <div class="q"><label class="qtext">Tipografía</label><input type="text" name="f6_tipografia" placeholder="Ej: Montserrat para títulos, Open Sans para texto"></div>
+            </div>
+            <div class="q"><label class="qtext">Estilo visual e iconografía</label><textarea name="f6_estilo_iconografia" placeholder="Ej: estilo técnico/industrial, iconos de línea para especificaciones (potencia, capacidad, dimensiones)"></textarea></div>
+          </div>
+
+          <div class="subblock">
+            <div class="subblock-title">Componentes de la plantilla</div>
+            <div class="hint" style="margin-bottom:10px;">Para cada componente: ¿se mantiene sin cambios, se personaliza, se elimina o se reemplaza por uno nuevo?</div>
+            <!-- component rows generated below -->
+            <div class="component-rows" id="componentRows"></div>
+          </div>
+
+          <div class="q"><label class="qtext">Funcionalidades adicionales requeridas</label>
+            <div class="hint">Ej: con 39 marcas, "comparación de productos" y "filtros personalizados" suelen ser las más pedidas.</div>
+            <div class="chips" data-group="f6_funcionalidades" data-type="checkbox">
+              <label class="chip"><input type="checkbox" name="f6_funcionalidades" value="Buscador avanzado">Buscador avanzado</label>
+              <label class="chip"><input type="checkbox" name="f6_funcionalidades" value="Filtros personalizados">Filtros personalizados</label>
+              <label class="chip"><input type="checkbox" name="f6_funcionalidades" value="Productos relacionados">Productos relacionados</label>
+              <label class="chip"><input type="checkbox" name="f6_funcionalidades" value="Productos destacados">Productos destacados</label>
+              <label class="chip"><input type="checkbox" name="f6_funcionalidades" value="Comparación de productos">Comparación de productos</label>
+              <label class="chip"><input type="checkbox" name="f6_funcionalidades" value="Lista de favoritos">Lista de favoritos</label>
+              <label class="chip"><input type="checkbox" name="f6_funcionalidades" value="Botón de WhatsApp">Botón de WhatsApp</label>
+              <label class="chip"><input type="checkbox" name="f6_funcionalidades" value="Blog">Blog</label>
+              <label class="chip"><input type="checkbox" name="f6_funcionalidades" value="Preguntas frecuentes">Preguntas frecuentes</label>
+              <label class="chip"><input type="checkbox" name="f6_funcionalidades" value="Descarga de documentos técnicos">Descarga de documentos técnicos</label>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- FASE 7 -->
+      <section class="phase" id="f7">
+        <div class="phase-head">
+          <div class="phase-badge">07</div>
+          <div>
+            <div class="phase-title">Contenido y activos</div>
+            <div class="phase-goal">Identificar el material disponible y los elementos pendientes para la construcción del sitio.</div>
+          </div>
+        </div>
+        <div class="phase-body">
+          <div class="q"><label class="qtext">Contenido disponible</label>
+            <div class="hint">Ej: fichas técnicas y catálogos de fabricante son lo primero que suele faltar actualizado.</div>
+            <div class="chips" data-group="f7_contenido_disponible" data-type="checkbox">
+              <label class="chip"><input type="checkbox" name="f7_contenido_disponible" value="Fotografías">Fotografías</label>
+              <label class="chip"><input type="checkbox" name="f7_contenido_disponible" value="Videos">Videos</label>
+              <label class="chip"><input type="checkbox" name="f7_contenido_disponible" value="Manuales">Manuales</label>
+              <label class="chip"><input type="checkbox" name="f7_contenido_disponible" value="Fichas técnicas">Fichas técnicas</label>
+              <label class="chip"><input type="checkbox" name="f7_contenido_disponible" value="Catálogos">Catálogos</label>
+              <label class="chip"><input type="checkbox" name="f7_contenido_disponible" value="Textos">Textos</label>
+              <label class="chip"><input type="checkbox" name="f7_contenido_disponible" value="Certificaciones">Certificaciones</label>
+              <label class="chip"><input type="checkbox" name="f7_contenido_disponible" value="Casos de éxito">Casos de éxito</label>
+              <label class="chip"><input type="checkbox" name="f7_contenido_disponible" value="Logos de marcas">Logos de marcas</label>
+              <label class="chip"><input type="checkbox" name="f7_contenido_disponible" value="Iconografía">Iconografía</label>
+              <label class="chip"><input type="checkbox" name="f7_contenido_disponible" value="Preguntas frecuentes">Preguntas frecuentes</label>
+            </div>
+          </div>
+          <div class="q"><label class="qtext">Contenido pendiente por producir antes de la carga del sitio</label>
+            <textarea name="f7_contenido_pendiente" style="min-height:100px;" placeholder="Ej: fotografía profesional de 39 marcas, redacción de descripciones técnicas de las categorías nuevas de cárnicos"></textarea></div>
+        </div>
+      </section>
+
+      <footer class="submitbar">
+        <div class="submitcard">
+          <div class="txt"><strong>Guardar respuestas de la sesión</strong>Se envían a la hoja de cálculo conectada. Puedes seguir editando y volver a enviar; cada envío agrega una fila nueva con fecha y hora.</div>
+          <button type="submit" class="send" id="sendBtn">Guardar en Google Sheets →</button>
+        </div>
+        <div id="statusMsg" style="color:var(--ink-soft);"></div>
+      </footer>
+
+    </form>
+  </main>
+</div>
+
+<script>
+  // ---------------------------------------------------------------
+  // 1) PEGA AQUÍ LA URL DE TU GOOGLE APPS SCRIPT WEB APP
+  //    (ver README.md para instrucciones de configuración)
+  // ---------------------------------------------------------------
+  const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwN8xtgyngv-qmRFrMiSO2lTogXIkqMg-DMHJF2SM3AMPichX4BNU6owtIYjghvoczr/exec";
+
+  // Componentes de plantilla (tabla generada por JS para no repetir markup)
+  const COMPONENTES = ["Header","Footer","Menú principal","Botones","Tarjetas","Espaciados"];
+  const rowsWrap = document.getElementById('componentRows');
+  COMPONENTES.forEach(function(name, i){
+    const key = 'f6_estado_' + name.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g,'')
+      .replace(/\s+/g,'_');
+    const row = document.createElement('div');
+    row.className = 'q';
+    row.innerHTML = '<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">' +
+      '<label class="qtext" style="min-width:140px;">'+name+'</label>' +
+      '<div class="chips" data-group="'+key+'" data-type="radio">' +
+      ['Se mantiene','Se personaliza','Se elimina','Se reemplaza'].map(function(opt){
+        return '<label class="chip"><input type="radio" name="'+key+'" value="'+opt+'">'+opt+'</label>';
+      }).join('') + '</div></div>';
+    rowsWrap.appendChild(row);
+  });
+
+  // agrega un campo de comentario debajo de cada pregunta
+  document.querySelectorAll('.q').forEach(function(q, idx){
+    const namedEl = q.querySelector('[name]');
+    const baseName = namedEl ? namedEl.name : ('nota_' + idx);
+    const wrap = document.createElement('div');
+    wrap.className = 'comment-field';
+    wrap.innerHTML = '<span class="clabel">💬 Comentario</span>' +
+      '<input type="text" class="comment-input" name="'+baseName+'_comentario" placeholder="Contexto, dudas o acuerdos de esta pregunta (opcional)">';
+    q.appendChild(wrap);
+  });
+
+  // chip toggle behaviour
+  document.querySelectorAll('.chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      const input = chip.querySelector('input');
+      if(input.type === 'radio'){
+        chip.parentElement.querySelectorAll('.chip').forEach(function(c){c.classList.remove('active');});
+        input.checked = true;
+        chip.classList.add('active');
+      } else {
+        input.checked = !input.checked;
+        chip.classList.toggle('active', input.checked);
+      }
+      updateProgress();
+    });
+  });
+
+  // left rail smooth scroll + active state
+  document.querySelectorAll('.rail-item').forEach(function(item){
+    item.addEventListener('click', function(){
+      document.getElementById(item.dataset.target).scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+
+  const sections = ['f1','f2','f3','f4','f5','f6','f7'];
+  function updateProgress(){
+    let totalFields = 0, filled = 0;
+    sections.forEach(function(id){
+      const sec = document.getElementById(id);
+      const fields = sec.querySelectorAll('input[type=text]:not(.comment-input), textarea, input[type=radio], input[type=checkbox]');
+      const groupsSeen = new Set();
+      let secFilled = 0, secTotal = 0;
+      fields.forEach(function(f){
+        if(f.type === 'radio' || f.type === 'checkbox'){
+          if(groupsSeen.has(f.name)) return;
+          groupsSeen.add(f.name);
+          secTotal++;
+          const anyChecked = sec.querySelectorAll('input[name="'+f.name+'"]:checked').length > 0;
+          if(anyChecked) secFilled++;
+        } else {
+          secTotal++;
+          if(f.value.trim() !== '') secFilled++;
+        }
+      });
+      totalFields += secTotal; filled += secFilled;
+      document.querySelector('.rail-item[data-target="'+id+'"]').classList.toggle('done', secTotal>0 && secFilled/secTotal >= 0.6);
+    });
+    const pct = totalFields ? Math.round(100*filled/totalFields) : 0;
+    document.getElementById('progressFill').style.width = pct+'%';
+    document.getElementById('progressLabel').textContent = pct+'% respondido';
+  }
+  document.querySelectorAll('input[type=text], textarea').forEach(function(el){
+    el.addEventListener('input', updateProgress);
+  });
+  updateProgress();
+
+  // form submit -> collect JSON -> POST to Apps Script
+  document.getElementById('discoveryForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const btn = document.getElementById('sendBtn');
+    const status = document.getElementById('statusMsg');
+
+    if(SHEET_WEBHOOK_URL.indexOf('PEGAR_AQUI') !== -1){
+      status.textContent = 'Falta pegar la URL de Google Apps Script en el código (ver instrucciones).';
+      status.style.color = 'var(--danger)';
+      return;
+    }
+
+    const data = {};
+
+    const seen = {};
+    document.querySelectorAll('#discoveryForm input, #discoveryForm textarea, #discoveryForm select').forEach(function(f){
+      if(!f.name) return;
+      if(f.type === 'checkbox'){
+        if(!seen[f.name]) seen[f.name] = [];
+        if(f.checked) seen[f.name].push(f.value);
+        data[f.name] = seen[f.name].join('; ');
+      } else if(f.type === 'radio'){
+        if(f.checked) data[f.name] = f.value;
+        else if(!(f.name in data)) data[f.name] = '';
+      } else {
+        data[f.name] = f.value;
+      }
+    });
+
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    status.style.color = 'var(--ink-soft)';
+    status.textContent = 'Enviando a Google Sheets...';
+
+    fetch(SHEET_WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(data)
+    }).then(function(){
+      status.textContent = '✓ Guardado. Revisa tu Google Sheet para confirmar la fila nueva.';
+      status.style.color = 'var(--mint-deep)';
+      btn.textContent = 'Guardar en Google Sheets →';
+      btn.disabled = false;
+    }).catch(function(err){
+      status.textContent = 'Error de conexión: ' + err.message;
+      status.style.color = 'var(--danger)';
+      btn.textContent = 'Guardar en Google Sheets →';
+      btn.disabled = false;
+    });
+  });
+</script>
+
+</body>
+</html>
