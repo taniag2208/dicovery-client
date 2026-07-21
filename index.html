@@ -33,7 +33,7 @@
   /* subtle blueprint grid texture in the hero */
   .hero{
     position:relative;
-    padding:56px 6vw 40px;
+    padding:56px 0 40px;
     overflow:hidden;
     border-bottom:1px solid var(--line);
   }
@@ -47,7 +47,7 @@
     mask-image: linear-gradient(180deg, black, transparent 85%);
     pointer-events:none;
   }
-  .hero-inner{position:relative; max-width:920px;}
+  .hero-inner{position:relative; max-width:1080px; margin:0 auto; padding:0 clamp(20px,5vw,56px);}
   .eyebrow{
     display:inline-flex; align-items:center; gap:8px;
     font-family:'JetBrains Mono', monospace;
@@ -74,8 +74,8 @@
   .hero-meta strong{display:block; font-size:14px; color:var(--ink); font-weight:600; margin-top:2px;}
 
   .layout{
-    max-width:1180px; margin:0 auto; padding:40px 6vw 120px;
-    display:grid; grid-template-columns:240px 1fr; gap:44px;
+    max-width:1080px; margin:0 auto; padding:40px clamp(20px,5vw,56px) 120px;
+    display:grid; grid-template-columns:220px minmax(0,1fr); gap:48px;
   }
   @media (max-width:880px){ .layout{grid-template-columns:1fr;} .railwrap{display:none;} }
 
@@ -650,7 +650,7 @@
       <footer class="submitbar">
         <div class="submitcard">
           <div class="txt"><strong>Guardar respuestas de la sesión</strong>Se envían a la hoja de cálculo conectada. Puedes seguir editando y volver a enviar; cada envío agrega una fila nueva con fecha y hora.</div>
-          <button type="submit" class="send" id="sendBtn">Guardar en Google Sheets →</button>
+          <button type="submit" class="send" id="sendBtn">Guardar</button>
         </div>
         <div id="statusMsg" style="color:var(--ink-soft);"></div>
       </footer>
@@ -762,20 +762,37 @@
       return;
     }
 
+    // Cada campo se convierte en una columna legible: usa el texto de la
+    // pregunta (y el título del subbloque como contexto) en lugar del nombre
+    // interno del campo. Así en Google Sheets las preguntas quedan como
+    // columnas y cada envío como una fila nueva.
+    function labelFor(f){
+      const q = f.closest('.q');
+      const subblock = f.closest('.subblock');
+      const stEl = subblock ? subblock.querySelector('.subblock-title') : null;
+      const subTitle = stEl ? stEl.textContent.trim() : '';
+      const qtEl = q ? q.querySelector('.qtext') : null;
+      const base = qtEl ? qtEl.textContent.trim() : '';
+      let label = base ? (subTitle ? subTitle + ' — ' + base : base) : (subTitle || f.name);
+      if(f.classList.contains('comment-input')) label += ' (comentario)';
+      return label;
+    }
+
     const data = {};
 
     const seen = {};
     document.querySelectorAll('#discoveryForm input, #discoveryForm textarea, #discoveryForm select').forEach(function(f){
       if(!f.name) return;
+      const label = labelFor(f);
       if(f.type === 'checkbox'){
         if(!seen[f.name]) seen[f.name] = [];
         if(f.checked) seen[f.name].push(f.value);
-        data[f.name] = seen[f.name].join('; ');
+        data[label] = seen[f.name].join('; ');
       } else if(f.type === 'radio'){
-        if(f.checked) data[f.name] = f.value;
-        else if(!(f.name in data)) data[f.name] = '';
+        if(f.checked) data[label] = f.value;
+        else if(!(label in data)) data[label] = '';
       } else {
-        data[f.name] = f.value;
+        data[label] = f.value;
       }
     });
 
@@ -791,12 +808,12 @@
     }).then(function(){
       status.textContent = '✓ Guardado. Revisa tu Google Sheet para confirmar la fila nueva.';
       status.style.color = 'var(--mint-deep)';
-      btn.textContent = 'Guardar en Google Sheets →';
+      btn.textContent = 'Guardar';
       btn.disabled = false;
     }).catch(function(err){
       status.textContent = 'Error de conexión: ' + err.message;
       status.style.color = 'var(--danger)';
-      btn.textContent = 'Guardar en Google Sheets →';
+      btn.textContent = 'Guardar';
       btn.disabled = false;
     });
   });
